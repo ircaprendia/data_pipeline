@@ -1,0 +1,21 @@
+# No data ever, in any form
+data/
+*.csv
+*.xlsx
+*.rds
+*.zip
+
+# Local identifiers / secrets (never committed)
+local_identifiers.R
+.Renviron
+.env
+*.token
+
+# R / RStudio cruft
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# OS
+.DS_Store

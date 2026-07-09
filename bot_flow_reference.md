@@ -1,0 +1,153 @@
+---
+
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# aprendIA — how the bot works
+
+*Drafted 2026-07-03. A walkthrough of the teacher's actual journey through aprendIA on WhatsApp, grounded in two sources: the product team's own design documentation, and real conversations from live Nigeria data. The two don't always agree — the bot personalises much of its own language, and a few features behave differently in practice than they're specified — so this doc notes both, rather than assuming either is the full picture on its own.*
+
+## 1. The journey, at a glance
+
+```         
+Onboarding (a few quick questions about the teacher's classroom)
+  │
+  ▼
+"What do you need today?"
+  │
+  ├── Learn a skill ───────────────► choose a course ───► course content
+  │                                                          │
+  │                                                          ▼
+  │                                                   Module intro, then a
+  │                                                   sequence of short
+  │                                                   strategies, then a quiz
+  │                                                          │
+  │                                                          ▼
+  │                                                   Module complete ──► next
+  │                                                   module, or course complete
+  │
+  ├── Solve a challenge now ──────► describe the problem ──► a short action plan
+  │                                                          (try this tomorrow)
+  │
+  └── Your classroom toolkit ─────► energy shifter, or a
+                                     wellbeing moment for the teacher
+```
+
+Everything below walks through each of these stages in turn, with real examples.
+
+## 2. The bot is instructed to improvise
+
+Every message quoted in this document is one real example, not the fixed text — the bot's own system prompt requires this. It states, verbatim: *"Adapt by default, every time... if you cannot name at least one specific profile field in the Adapt step, rewrite it before sending."* A separate rule for quizzes forbids reusing module wording near-verbatim in quiz questions. This is not a side effect of using an AI model — it is an explicit product requirement, checked against real data: 146 messages marking the same nominal event (starting Module 1 of the Maths course) were compared, and every single one was worded differently, each pulling in a detail from that specific teacher's own onboarding answers (their subject, their class size, their stated challenge).
+
+Practically, this means a partner or observer reading two teachers' transcripts side by side will see what looks like two different bots. It also suggests — not yet checked directly against real data, so a plausible implication rather than a confirmed finding — that a teacher who skipped or gave thin onboarding answers has less profile detail for the model to adapt with, and so may get more generic messages than a teacher who answered fully.
+
+This also makes things tough for data analysts trying to identify where a user has got to in its journey. Instead of being able to simply look for stock phrases (eg, "You've started the Maths course, module 1!"), we have to use a mix of broad searches, LLM validation and trial and error to pick up the flow.
+
+## 3. Onboarding
+
+Every teacher answers a short set of questions before using the bot for the first time — gender, the age and grade level of their students, their biggest classroom challenge, what materials they have available, and what outcome matters most to them. This happens once per teacher.
+
+The bot introduces itself like this:
+
+> 👋🏾 Hello! I'm aprendIA, your on-demand classroom mentor. My job is to teach you new skills, offer ideas for your classroom, and answer your questions—after this short setup.
+>
+> Ready to begin?
+
+*Source: real Nigeria message data, closely paraphrasing the Step 1 introduction specified in `onboarding-agent.md` — the live wording differs slightly from the design doc's own text ("...answer any questions you have" vs. "...answer your questions—after this short setup"), consistent with the bot personalising even its most fixed opening line.*
+
+The exact wording varies slightly teacher to teacher — this is true throughout the bot, not just here — but the substance and sequence of questions is consistent.
+
+## 4. The main menu
+
+Once onboarding is done, the bot asks what the teacher needs:
+
+> What do you need today?
+>
+> 📘 Learn a skill Take a short guided course.
+>
+> 🔧 Solve a challenge now Solve a classroom problem.
+>
+> 🧰 Your classroom toolkit Create quick breaks and routines.
+
+*Source: `pathway-selection-agent.md` §1 — confirmed verbatim against real Nigeria message data.*
+
+This is one of the few messages that comes through essentially word-for-word every time.
+
+## 5. Learn a skill → choosing a course
+
+Picking "Learn a skill" brings up a course menu. The product's own course-design documentation specifies five courses, but **only four are actually live for teachers today**: Math for Every Learner, Building Strong Readers, Classroom Management, and Teacher Wellbeing. A fifth, Active & Inclusive Learning, and a planned Safeguarding course, haven't launched yet.
+
+> Great choice! Here are the available short courses you can start:
+>
+> 📚 Teacher Wellbeing — Support your own wellbeing and manage teaching stress. ➕ Math for Every Learner — Plan and teach maths for all students with practical, local strategies. 🧱 Classroom Management — Create a calm and inclusive class with routines and positive discipline. 📖 Building Strong Readers — Help your pupils become confident readers with step-by-step support.
+
+*Source: real Nigeria message data, confirmed verbatim. Notably, this differs in format from `pathway-selection-agent.md` §2's own specified course-menu text (a plain numbered list of five courses, no emoji) — one more case of the live product diverging from its design doc, on top of the fifth course being entirely absent.*
+
+**Teacher Wellbeing is a relatively new addition** — real usage first appears in the data on 2026-05-01 and has continued steadily since, so it's a genuine, established part of the course lineup now, not a test.
+
+Once a teacher picks a course, the intended flow is a short confirmation line — "Great — you've selected [course]. Let's begin!" — followed immediately by the first module. **In practice, a large share of teachers skip straight from picking a course into the module content, with no confirmation message at all.** Both patterns are common; neither is wrong, they're just two different ways the same moment plays out in the real product.
+
+## 6. Solve a Challenge
+
+This is for a teacher with an immediate classroom problem, not looking to take a course. The bot asks what kind of problem it is:
+
+> Sure! Please tell me about the classroom challenge you want help with. Is it about: - behavior or noise - attention and engagement - lesson planning or activity ideas - student wellbeing or support
+>
+> Or, describe your challenge in your own words...
+
+*Source: `quick-help-agent.md`, the Solve a Challenge intake prompt. Real delivered messages checked today phrase the categories slightly differently ("Is it about student behavior, keeping attention, lesson planning, or something else?" as a single sentence, not a bulleted list) — another small case of live wording diverging from the doc's exact phrasing, though the substance (four problem categories plus a free-text option) matches.*
+
+It then generates a short, practical plan in a fixed shape:
+
+```         
+I hear you: [acknowledges the specific situation]
+Do this now:
+1. [a concrete step]
+2. [a concrete step]
+3. [an optional third step]
+If that's hard: [a simpler fallback]
+Quick check: [a yes/no way to tell if it worked]
+```
+
+*Source: `quick-help-agent.md`, "Output Format (Use Exactly)" — the four labelled slots are mandatory; the content within each is generated fresh per teacher.*
+
+The plan itself is written fresh each time, tailored to the teacher's grade level, class size, and available materials — the product's own design documentation is explicit that these details "must actively shape every response, not just be acknowledged passively."
+
+## 7. Classroom Toolkit
+
+This is the quickest of the three options — a short, immediate activity rather than a course or a problem-solving conversation. In practice it offers two things:
+
+> 🧰 Welcome to the Classroom Toolkit! Here you'll find energy shifters and teacher wellbeing moments that can support you and your class throughout the day.
+>
+> What would you like right now? 1. An energy shifter (quick learning break to support students) 2. A teacher wellbeing moment (calming or positive moment for you)
+
+*Source: real Nigeria message data, confirmed verbatim. The underlying content-generation rules (energizer categories, wellbeing categories, the Title/Steps/Notice output shape) are specified in `classroom-toolkit.md`.*
+
+An energy shifter is a short activity for the classroom (a movement break, a focusing game); a wellbeing moment is a short reset for the teacher themselves. Both are delivered as a title, a short set of steps, and a closing note — generated fresh each time, not from a fixed script.
+
+## 8. Inside a course: modules, strategies, and quizzes
+
+Once a teacher is in a course, the structure is the same across all four: a module opens with a short overview of what it covers, then delivers a handful of numbered strategies one at a time ("Strategy 1/5," "Strategy 2/5," and so on), each a short, practical technique the teacher can try. A module usually ends with a short quiz — a few questions checking what the teacher took in, with immediate feedback ("Correct!" or "Almost!") after each answer.
+
+Course structure has two layers. Each course has a small number of required "core" modules that unlock one after another. After that, a set of optional "deep dive" modules unlock all at once, and the teacher can take them in any order. Teacher Wellbeing is the one exception — it's fully sequential from start to finish, with no optional deep-dive tier.
+
+The bot sometimes also generates quiz-style content as a *resource for the teacher's own classroom* (eg, "here's a quiz you can use with your students") — this is a different thing from the bot quizzing the teacher on the course material, even though it can look similar at a glance.
+
+## 9. Finishing up
+
+Finishing a module (or, for later modules, a deep dive) triggers a short congratulations message and moves the teacher on to what's next. Finishing every required part of a course triggers a course-completion message. None of this text is scripted word-for-word in the product design — it's generated per course and per teacher, based on a specified structure and logic (eg "the course is complete once both deep dives are done") rather than a fixed message.
+
+## Things worth knowing, still evolving
+
+- **Teacher Wellbeing's rollout** (since May 2026) may be worth double-checking with the product team if it wasn't expected to be live yet.
+- **The Classroom Toolkit's specification lists two more options** beyond what's currently shown to teachers (a "Teacher Wellbeing Plan" and a "Save" feature) — not yet observed in real use, so unclear whether they're built and just not surfaced, or not yet built.
+- **Active & Inclusive Learning and Safeguarding** are both planned but not yet available to teachers.
+- This walkthrough covers Nigeria. The bot also runs in Ecuador (Spanish) and Niger (French), and the exact flow may differ there — not yet reviewed to the same depth.
+
+## Sources
+
+Product design documentation: the onboarding script, the pathway/course-selection agent, the Solve a Challenge agent, and the Classroom Toolkit agent specifications, plus one representative module specification. Real examples: live Nigeria conversation data, 2026-07-02/03.
+
+*For the data side of this — how each of these moments is (or isn't yet) captured in the analytics pipeline — see [pipeline.md](pipeline.md).*
