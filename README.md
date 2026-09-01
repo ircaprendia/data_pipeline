@@ -1,5 +1,7 @@
 # aprendIA — data pipeline
 
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
 aprendIA is a WhatsApp chatbot from the International Rescue Committee (IRC) that is a mentor and trainer to teachers in Nigeria, Ecuador and Niger. Teachers send a WhatsApp message to aprendIA. It delivers short course modules, quizzes, and classroom tools, adapting each reply to the teacher's profile. This repository is the data pipeline behind the product: the R code that turns raw chat logs into sessions, per-teacher histories, and course events, and the Shiny dashboard that reports them.
 
 aprendIA is an open product, and this repository is public. It contains methods, not data. No messages or personal data are committed, and contact identifiers are opaque platform tokens. The code can be forked, but the pipeline cannot be run here, because the data is held outside the repository.
