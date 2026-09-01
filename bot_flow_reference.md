@@ -1,7 +1,3 @@
-------------------------------------------------------------------------
-
-editor_options: markdown: wrap: 72 ---
-
 # aprendIA — how the bot works
 
 *Drafted 2026-07-03. A walkthrough of the teacher's actual journey through aprendIA on WhatsApp, grounded in two sources: the product team's own design documentation, and real conversations from live Nigeria data. The two don't always agree — the bot personalises much of its own language, and a few features behave differently in practice than they're specified — so this doc notes both, rather than assuming either is the full picture on its own.*
