@@ -102,7 +102,7 @@ persistence_data <- persistence_metrics %>%
   filter(!is.na(group), !is.na(cluster_group_label)) %>%
   mutate(strata_label = paste0(group, " · ", cluster_group_label))
 
-# Niger has one population (no groups/clusters), so all views are the same curve.
+# Ecuador has one population (no groups/clusters), so all views are the same curve.
 # Compute total once and duplicate for schema consistency with Nigeria.
 fit_total <- survfit(Surv(active_days, event) ~ 1, data = persistence_data)
 

@@ -65,6 +65,8 @@ scripts/     the ordered stages: 00_load → 01_clean → 02_aggregate → {coun
 app.R        the Shiny dashboard (one tab per country)
 ```
 
+What each script and function actually does — a plain-English walkthrough, not just the directory-level summary above — is in the [code reference](code_reference.md).
+
 The pipeline cannot be run from this repository. The raw messages are held outside it, under an environment variable, and are never committed. Two local files the pipeline expects are also absent by design: the processed `data/` folder (gitignored), and `config/local_identifiers.R` — a private file naming the test users to remove and the bot's phone number per country, kept out so no real name or number enters a public repository. The code can be read and checked; it has nothing to run on.
 
 ## Scope

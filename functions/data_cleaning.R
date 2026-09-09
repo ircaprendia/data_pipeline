@@ -40,8 +40,7 @@ clean_messages <- function(
       message_type == "chat",
       from == phone_num_from | to == phone_num_to,
       if (!is.null(test_users) && "contact_name" %in% names(.)) !contact_name %in% test_users else TRUE,
-      if (!is.null(test_user_ids)) !contact_id %in% test_user_ids else TRUE,
-      to != "^+19297318872"
+      if (!is.null(test_user_ids)) !contact_id %in% test_user_ids else TRUE
     ) %>%
     unique() %>%
     # Text cleaning and feature engineering

@@ -1,6 +1,6 @@
 # aprendIA codebook
 
-*Philip Blue — April 2026* *Status: Field definitions complete; course taxonomy flagged as version-pinned (drift audit 2026-06-09 — see note after Overview)*
+*Philip Blue — April 2026* *Status: Field definitions complete. Course taxonomy flagged as version-pinned since a 2026-06-09 drift audit (see note after Overview); a full field-by-field reliability audit on 2026-09-08 went further and gives every bot-template detector and module-start flag a specific valid_from/valid_to window and a retire/live status — see "Bot interaction flags" and "Module start flags" below for the current numbers, not just the general caution.*
 
 ------------------------------------------------------------------------
 
@@ -38,7 +38,7 @@ The course and module flags in this codebook (`select_reading`, `maths_mod*_star
 
 The durable way to read these datasets separates two kinds of thing the wide flags conflate:
 
-- **Version-stable structural primitives — trust these.** `has_start_phrase`, `has_completion`, `has_quiz`, onboarding-present, and reminder-detection (`start_direction`) detect *that* a module started, a quiz happened, or onboarding occurred — independent of which course or what number. They survive drift.
+- **Version-stable structural primitives.** `has_start_phrase`, `has_completion`, `has_quiz`, onboarding-present, and reminder-detection (`start_direction`) detect *that* a module started, a quiz happened, or onboarding occurred — independent of which course or what number. They survive wording drift, unlike the fields below. **Correction, 2026-09-08:** "trust these" overstated it — surviving drift is a recall property, not a precision guarantee. All three are confirmed live (see "Bot interaction flags" below) but explicitly unvalidated for precision; treat as live, not as trusted.
 - **Course-and-module identity — do not read as current.** "Reading module 3", "Maths M2", the SEL-mislabelled `classroom_mod*` — this is what rots with each bot version. The forward direction (Track 1.5 / Track 4) is to stop matching a frozen enum and instead recover the course/module title as a data field whose value is whatever the transcript says.
 
 No KB version history is known to exist, so the legacy flags cannot be date-bounded to specific bot versions precisely. Until one surfaces (a Track 0 ask), treat any specific course list as defensive, not authoritative.
@@ -105,7 +105,7 @@ Two distinct country fields — **do not conflate them**.
 
 ### Bot interaction flags
 
-> The `select_*` flags here are **legacy** — superseded by `course_start` (see the Level 4 crosswalk). The `has_*` flags and `given_options` are current engineered features.
+> The `select_*` flags here are **legacy** — superseded by `course_start` (see the Level 4 crosswalk). The `has_*` flags are current engineered features. **Correction, 2026-09-08:** this line originally also called `given_options` current — it isn't; see its RETIRED status and validity window below, added the same day this correction was made.
 
 | Variable | Type | Description | Notes |
 |----|----|----|----|
@@ -118,6 +118,22 @@ Two distinct country fields — **do not conflate them**.
 | `has_start_phrase` | lgl | Module start phrase detected | TRUE if message contains a module start signpost. NA for incoming messages |
 | `has_completion` | lgl | Completion phrase detected | TRUE if message contains a module completion signpost. NA for incoming messages |
 | `has_quiz` | lgl | Quiz phrase detected | TRUE if message contains a quiz signpost. NA for incoming messages |
+
+**Validity windows, from a full field-by-field reliability audit (2026-09-08).** Each `select_*` flag and `given_options` matches a literal bot template string. When the bot's wording changed, the flag stopped firing — silently, with no distinction between "did not happen" and "no longer detected." `valid_to` is the field's last true fire in the Nigeria message record as of the audit date.
+
+| Variable | valid_from | valid_to | Status |
+|----|----|----|----|
+| `given_options` | 2025-08-16 | 2026-04-28 | **Retired.** Dark 132 days as of the audit. No direction filter — matches one literal bot string regardless of sender |
+| `select_course` | 2025-08-20 | 2026-06-05 | **Retired.** Dark 94 days |
+| `select_question` | 2025-08-16 | 2026-04-24 | **Retired.** Dark 136 days |
+| `select_classroom_mgmt` | 2025-08-20 | 2026-01-30 | **Retired.** Dark 220 days |
+| `select_maths` | 2025-08-20 | 2026-02-11 | **Retired.** Dark 208 days |
+| `select_reading` | 2025-08-20 | 2026-01-23 | **Retired.** Dark 227 days |
+| `has_start_phrase` | 2025-08-15 | (live) | Live — 17,711 fires to 2026-09-04. Matches generic phrasing, not a course/module title, so it never drifted the way the flags above did. Unvalidated for precision |
+| `has_completion` | 2025-08-20 | (live) | Live — 3,591 fires to 2026-09-02. Same caveat |
+| `has_quiz` | 2025-08-20 | (live) | Live — 2,957 fires to 2026-09-03. Same caveat |
+
+"Retired" here means: not for use in new analysis, dashboards, or clustering beyond `valid_to`. The derivation code is unchanged and keeps computing these columns on every run — retiring is a documentation and usage decision, not a code deletion, so the historical fires stay intact and inspectable. The `select_classroom_mgmt` / `select_maths` / `select_reading` trio is the one the `which_course` bug's fix comment (`functions/session_classification.R`) prescribes as the remedy — do not apply that fix; all three have been dark since early 2026.
 
 ------------------------------------------------------------------------
 
@@ -136,6 +152,29 @@ One binary flag per module per course. 1 if this message contains the start sign
 **Version-drift corrections** (see "Course taxonomy is version-pinned" above): - **Reading** is a now-historical course, gone from the latest KB. The flags fire on genuine historical Reading sessions but Reading is not a current course. - **Maths** here is the pre-restructure structure — five sequential modules (Exploring Math Domains, Shifting Math Mindsets, Math Process Skills, Making Math Hands-On, Reaching Every Learner). The latest KB reorganised Maths into 2 core + 5 deep dives, with Shifting Math Mindsets demoted from M2 to a deep dive. The numbering here does not match the current bot. - **"Classroom management" is a misnomer.** These four flags detect IRC's SEL / Healing Classroom content — Sense of Control (M1), Sense of Belonging / Positive Relationships (M2), Engagement & Self-Worth (M3), Healing Classroom / Assessing Classroom Dynamics (M4), per `functions/message_processing.R:185–212`. The latest KB's Teacher Wellbeing course differs again from this set, so the column name, the content it detects, and the current bot course are three different things.
 
 **Note:** Based on the glimpse output, `has_start_phrase`, `has_completion`, and `has_quiz` are NA for incoming messages, confirming these flags are applied to outgoing bot messages only. The module `_start` flags mark the outgoing message that introduces a module. `has_completion` and `has_quiz` provide session-level completion and quiz detection. Individual per-module completion flags do not currently exist — only start flags.
+
+**All fourteen retired, 2026-09-08 — a finalised decision, not a partial one.** The same field-by-field audit found the module-start family in three states — fully dark, live-but-badly-degraded, and "fired once and never checked" — and the decision was to retire the whole family rather than repair or partially keep it, because its replacement (`module_complete` / `deep_dive_complete` in the event schema — see Level 4) already exists and was independently found more accurate in direct conversation reads.
+
+| Variable | Fires | valid_from | valid_to | Status |
+|----|----|----|----|----|
+| `classroom_mod1_start` | 2,322 | 2025-08-20 | 2026-04-30 | Retired. Dark 130 days |
+| `classroom_mod2_start` | 215 | 2025-08-21 | 2026-04-22 | Retired. Dark 138 days |
+| `classroom_mod3_start` | 123 | 2025-08-21 | 2026-04-23 | Retired. Dark 137 days |
+| `classroom_mod4_start` | 87 | 2025-08-23 | 2026-03-30 | Retired. Dark 161 days |
+| `reading_mod1_start` | 887 | 2025-08-20 | 2026-09-02 | Retired. Was live but badly degraded — roughly 5% of prior recall, and misfiring on about a quarter of what it still caught in a direct read (including a Classroom-Management module mis-flagged as Reading) |
+| `reading_mod2_start` | 83 | 2025-08-22 | 2026-03-03 | Retired. Dark 188 days |
+| `reading_mod3_start` | 45 | 2025-08-24 | 2026-02-01 | Retired. Dark 218 days |
+| `reading_mod4_start` | 24 | 2025-09-03 | 2026-02-03 | Retired. Dark 216 days |
+| `reading_mod5_start` | 1 | 2025-09-08 | 2025-09-08 | Retired. Fired once in thirteen months — a diagnosed asymmetric-regex bug (an extra AND-condition modules 1–4 don't have), not evidence module 5 doesn't exist. Not fixed — moot once the family retires |
+| `maths_mod1_start` | 792 | 2025-08-20 | 2026-08-12 | Retired. Same degraded-not-dead pattern as `reading_mod1_start` |
+| `maths_mod2_start` | 123 | 2025-08-20 | 2026-04-22 | Retired. Dark 138 days |
+| `maths_mod3_start` | 54 | 2025-08-23 | 2026-04-23 | Retired. Dark 137 days |
+| `maths_mod4_start` | 43 | 2025-08-21 | 2026-03-20 | Retired. Dark 171 days |
+| `maths_mod5_start` | 8 | 2025-09-02 | 2025-11-15 | Retired. Eight fires, last November 2025 — born broken, never checked |
+
+**No Teacher Wellbeing flags exist in this family, and none are being added.** Wellbeing is a live course (since 2026-05-01) with no `select_wellbeing` or `wellbeing_mod*_start` equivalent anywhere in `functions/message_processing.R` — a real coverage gap if this detector family were staying in service, but moot given the whole family is retired above. Extending a retired approach to cover a course it never supported would be new work on something already being replaced; `module_complete`/`deep_dive_complete` in the event schema is where Wellbeing progression should be read from instead.
+
+Same meaning of "retired" as above: not for use going forward, derivation unchanged, historical fires intact.
 
 ------------------------------------------------------------------------
 
@@ -434,6 +473,8 @@ The event types actually produced, in four families. New types are new values, n
 ### Legacy flags superseded by the event schema
 
 The wide one-off flags in Levels 1 and 3 predate the event schema. They are **retained, not deprecated** — the dashboard still reads them, and Ecuador/Niger have no event schema yet — but for Nigeria analysis prefer the event equivalent below. They will be retired from the data and this codebook together, once the event schema is multi-country, validated against a gold standard, and feeding `contacts_data` as materialised views — not before.
+
+**Partial supersession, 2026-09-08.** That "not before" precondition is about waiting for a *replacement* to be validated. The bot-template-detector family specifically (`given_options`, `select_course`, `select_question`, `select_classroom_mgmt`, `select_maths`, `select_reading`, and all fourteen module-start flags) cleared a different, lower bar first: each field's own dark period was independently confirmed against the raw message record (see "Bot interaction flags" and "Module start flags" above), which is sufficient grounds to mark a field not-for-use regardless of whether its replacement is fully validated yet. That's why those specific fields are marked RETIRED above even though the event schema hasn't cleared the multi-country/gold-standard bar this paragraph describes. The remaining legacy flags in the table below (`female`/`male` and others not covered by the 2026-09-08 audit) are unaffected — the original "not before" condition still governs them.
 
 | Legacy flag(s) | Superseded by | Why the event is better |
 |----|----|----|

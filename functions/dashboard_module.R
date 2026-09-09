@@ -373,8 +373,6 @@ dashboard_server <- function(id, data, config) {
       p <- plot_dash_persistence(
         data        = data$survival,
         view        = persistence_view(),
-        group       = "All",
-        cluster     = "All",
         show_ribbon = isTRUE(input$show_ribbon),
         base_size   = txt$chart_base_size
       )
@@ -384,8 +382,6 @@ dashboard_server <- function(id, data, config) {
     output$plot_trajectories <- renderGirafe({
       p <- plot_dash_trajectories(
         data       = data$user_traj,
-        group      = "All",
-        cluster    = "All",
         facet      = traj_facet(),
         n_sample   = input$traj_n,
         base_size  = txt$chart_base_size,

@@ -11,6 +11,7 @@ aprendIA is an open product, and this repository is public. It contains methods,
 - 🌐 [**aprendia.io**](https://aprendia.io/) — the product site.
 - 💬 [**Bot flow reference**](bot_flow_reference.md) — the teacher's journey through the product, in plain language.
 - ⚙️ [**How the pipeline works**](pipeline.md) — how a chat log becomes analysis-ready tables.
+- 🧩 [**Code reference**](code_reference.md) — what each script and function does.
 - 📖 [**Codebook**](codebook.md) — the data dictionary.
 - 📊 [**Live dashboard**](https://philipblue.shinyapps.io/aprendia-dashboard/) — weekly usage and course engagement per country.
 - 🎨 [**Palette guide**](palette_guide.md) — the dashboard's colour system.
@@ -61,7 +62,7 @@ The analysis reads a small set of tables — one row per message, per session, p
 - **`scripts/`** — the ordered stages (`00_load` → `01_clean` → `02_aggregate` → classify → cluster → dashboard).
 - **`app.R`** — the Shiny dashboard.
 
-The code reads but does not run without the data. See [How the pipeline works](pipeline.md#the-code).
+What each script and function actually does is in the [code reference](code_reference.md). The code reads but does not run without the data. See [How the pipeline works](pipeline.md#the-code).
 
 ## Scope
 

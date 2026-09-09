@@ -326,8 +326,6 @@ plot_dash_weekly <- function(
 #                cluster_label, strata_label, time,
 #                estimate, conf.low, conf.high
 #   view         "4strata", "group", "cluster", or "total"
-#   group        "All", "Pilot", or "Scale-up"
-#   cluster      "All", "Power users", or "Occasional users"
 #   show_ribbon  show confidence interval ribbon (default TRUE)
 #   x_max        clip x-axis at this many active days (NULL = auto)
 #
@@ -336,18 +334,13 @@ plot_dash_weekly <- function(
 plot_dash_persistence <- function(
     data,
     view = "4strata",
-    group = "All",
-    cluster = "All",
     show_ribbon = TRUE,
     x_max = NULL,
     base_size = 11
 ) {
-  
+
   pd <- data %>% filter(view == !!view)
-  
-  if (group   != "All") pd <- pd %>% filter(group               == !!group)
-  if (cluster != "All") pd <- pd %>% filter(cluster_label == !!cluster)
-  
+
   if (nrow(pd) == 0) { message("No data."); return(NULL) }
   
   if (is.null(x_max)) {
@@ -555,8 +548,6 @@ plot_dash_sessions <- function(
 #   data          agg_user_traj — cols: contact_id, week_lapse,
 #                 group, cluster_group_label, message_num,
 #                 last_message
-#   group         "All", "Pilot", or "Scale-up"
-#   cluster       "All", "Power users", or "Occasional users"
 #   n_sample      number of users to sample per stratum (default 50)
 #   show_dots     show last-message dots (default TRUE)
 #   seed          random seed for reproducible sampling (default 42)
@@ -565,22 +556,17 @@ plot_dash_sessions <- function(
 
 plot_dash_trajectories <- function(
     data,
-    group = "All",
-    cluster = "All",
     n_sample = 50,
     show_dots = TRUE,
     seed = 42,
     facet = "group",     # "group", "4way", "cluster" or "none"
-    base_size = 11,   
+    base_size = 11,
     label_size = 2.6
 ) {
-  
+
   pd <- data %>%
     mutate(strata_label = paste0(group, " · ", cluster_label))
-  
-  if (group   != "All") pd <- pd %>% filter(group         == !!group)
-  if (cluster != "All") pd <- pd %>% filter(cluster_label == !!cluster)
-  
+
   if (nrow(pd) == 0) { message("No data."); return(NULL) }
   
   # Sample n_sample users per stratum for legibility
