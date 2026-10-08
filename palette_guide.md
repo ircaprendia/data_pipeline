@@ -1,5 +1,28 @@
 # aprendIA colour palette — usage guide
 
+## Dashboard v2 palette (from 2026-09-21)
+
+The second version of the dashboard draws its data colours from **Sanzo Wada combination 281** (Pale Lemon Yellow, Benzol Green, Cobalt Green, Antwarp Blue). The code for that version is not in this repository. The sections below describe the brand ramps and the first dashboard's assignments. Where the two differ for a second-version chart, this section applies.
+
+| Wada name | Hex | Used for |
+|---|---|---|
+| Antwarp Blue | `#007190` | Cluster 1, "Power users". Waterfall bar "Started, didn't complete". |
+| Cobalt Green | `#96D1AA` | Cluster 2, "Occasional users". Waterfall bar "Completed". Icon strokes. |
+| Benzol Green | `#00978D` | "All users" single series. Waterfall bar "All contacts". High end of the two-point gradient. |
+| Pale Lemon Yellow | `#FFEFAE` | Waterfall bar "Never started". Low end of the two-point gradient. |
+
+**Rules in use**
+- Darker means more. Antwarp Blue goes to the smaller, more engaged cluster and Cobalt Green to the larger, lighter-touch one.
+- The two most contrasting colours (Antwarp Blue, Cobalt Green) go to the two clusters.
+- Pale Lemon Yellow is too light to use as a solid fill on a white or card background. It appears only as a waterfall bar and as the low end of a gradient.
+- Wada 281 has no red and green loss-and-gain scheme. Cobalt Green marks "Completed" as the positive-feeling tone, without a strict good / bad encoding.
+
+**Supporting inks:** page background `#F8F9FA`, panel fill `#F3F5F7`, gridline `#D9E2EA`, body slate `#1F303F`, muted text `#7C8894`, stat label `#14524B`, stat descriptor `#2E4A3D`, churned `#E03A3A`.
+
+**Validation.** Checked against a colour-separation validator on a white surface, all pairs. Wada 281 does not pass as a four-colour categorical set. Benzol Green and Antwarp Blue are 12.0 apart in normal vision, and the floor is 15. Cobalt Green and Pale Lemon Yellow fall below the chroma floor and outside the lightness band, so they read as light grey beside the darker pair. In practice, use at most two Wada colours per chart, label directly, and give any third colour a secondary cue. Do not use Benzol Green and Antwarp Blue side by side as the only distinction between two series.
+
+---
+
 ## The palette at a glance
 
 Six hue ramps, each running ten stops from near-white (50) to near-black (900), plus Black and White as fixed anchors. Each ramp has a **base stop** — the primary use value, shown in bold below — and lighter or darker stops for backgrounds, borders, and type.

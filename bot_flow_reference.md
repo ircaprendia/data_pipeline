@@ -2,32 +2,36 @@
 
 *Drafted 2026-07-03. A walkthrough of the teacher's actual journey through aprendIA on WhatsApp, grounded in two sources: the product team's own design documentation, and real conversations from live Nigeria data. The two don't always agree — the bot personalises much of its own language, and a few features behave differently in practice than they're specified — so this doc notes both, rather than assuming either is the full picture on its own.*
 
+*Updated 2026-10-08 to follow the bot's specification as of 30 September 2026 and the course list teachers were sent up to 2 October 2026. Example messages come from the original July pass unless marked. No file states which version of the instructions is live, so details can differ from what a teacher sees. See the [bot version guide](bot_version_guide.md).*
+
 ## 1. The journey, at a glance
 
-```         
-Onboarding (a few quick questions about the teacher's classroom)
+```
+Onboarding (five quick questions about the teacher's classroom, asked once)
   │
   ▼
-"What do you need today?"
+"What do you need today?"        (a Resume option is also specified)
   │
-  ├── Learn a skill ───────────────► choose a course ───► course content
-  │                                                          │
-  │                                                          ▼
-  │                                                   Module intro, then a
-  │                                                   sequence of short
-  │                                                   strategies, then a quiz
-  │                                                          │
-  │                                                          ▼
-  │                                                   Module complete ──► next
-  │                                                   module, or course complete
+  ├── Learn a skill ──────────────► choose one of six courses ───► course content
+  │                                                                   │
+  │                                                                   ▼
+  │                                                          Core modules, each with a
+  │                                                          module intro, short strategies
+  │                                                          and a short quiz to pass
+  │                                                                   │
+  │                                                                   ▼
+  │                                                          All core modules passed ──►
+  │                                                          optional deep dives, then
+  │                                                          course complete
   │
-  │
-  ├── Solve a challenge now ──────► describe the problem ──► a short action plan
+  ├── Solve a challenge now ──────► describe the problem ───► a short action plan
   │                                                          (try this tomorrow)
   │
+  ├── Your classroom toolkit ─────► energy shifter, or a
+  │                                 wellbeing moment for the teacher
   │
-  └── Your classroom toolkit ─────► energy shifter, or a
-                                     wellbeing moment for the teacher
+  └── Plan a lesson ──────────────► six questions ───────────► a five-step lesson plan
+      (reached by asking for one)
 ```
 
 The following sections describe each step in this schema in detail.
@@ -44,7 +48,7 @@ This makes things tough for data analysts trying to identify where a user has go
 
 ## 3. Onboarding
 
-Every teacher answers a short set of questions before using the bot for the first time — gender, the age and grade level of their students, their biggest classroom challenge, what materials they have available, and what outcome matters most to them. This happens once per teacher.
+Every teacher answers a short set of classroom questions before using the bot for the first time. The current script asks five: gender, the grade level of their students, class size, what materials they have available, and how well their students are keeping up. This happens once per teacher. Earlier conversations show a six-question version that also asked about the teacher's biggest classroom challenge and the outcome that matters most to them, so the exact set depends on when a teacher joined. The product's design files describe onboarding as a fixed, scripted flow and not free generation, although the wording around it can still vary.
 
 The bot introduces itself like this:
 
@@ -72,23 +76,26 @@ Once onboarding is done, the bot asks what the teacher needs:
 
 This is one of the few messages that comes through essentially word-for-word every time.
 
+The specification also provides a Resume option.
+
 ## 5. Learn a skill → choosing a course
 
-Picking "Learn a skill" brings up a course menu. The product's own course-design documentation specifies five courses, but **only four are actually live for teachers today**: Math for Every Learner, Building Strong Readers, Classroom Management, and Teacher Wellbeing. A fifth, Active & Inclusive Learning, and a planned Safeguarding course, haven't launched yet.
+Picking "Learn a skill" brings up a course menu. Six courses are available to teachers: Building Strong Readers, Classroom Management, Math for Every Learner, Teacher Wellbeing, Active & Inclusive Learning and Keeping Children Safe. The first three were available from the start of the data. Teacher Wellbeing, Active & Inclusive Learning and Keeping Children Safe were added in May, July and August to September 2026.
 
-> Great choice! Here are the available short courses you can start:
+> Here are the courses you can learn as a teacher:
 >
-> 📚 Teacher Wellbeing — Support your own wellbeing and manage teaching stress.
+> 1. Building Strong Readers – Support reading for all levels.
+> 2. Classroom Management – Keep big classes orderly and safe.
+> 3. Math for Every Learner – Reach students at all maths levels.
+> 4. Teacher Wellbeing – Manage teacher stress and build resilience.
+> 5. Active & Inclusive Learning – Run lively, inclusive lessons.
+> 6. Keeping Children Safe – Spot warning signs and create a safe classroom.
 >
-> ➕ Math for Every Learner — Plan and teach maths for all students with practical, local strategies.
->
-> 🧱 Classroom Management — Create a calm and inclusive class with routines and positive discipline.
->
-> 📖 Building Strong Readers — Help your pupils become confident readers with step-by-step support.
+> Please type the course name or number you'd like to start with. For example, reply '1' to start with Building Strong Readers.
 
-*Source: Nigeria message data, confirmed verbatim. Notably, this differs in format from the specified course-menu text (a plain numbered list of five courses, no emoji) — one more case of the live product diverging from its design doc, on top of the fifth course being entirely absent.*
+*Source: Nigeria message data, a six-course menu sent on 2 October 2026. Other templates list the same six courses in a different order ("Now choose a course to start:" puts Math for Every Learner first), so the order is not fixed.*
 
-**Teacher Wellbeing is a relatively new addition** — real usage first appears in the data on 2026-05-01 and has continued steadily since, so it's a genuine, established part of the course lineup now, not a test.
+**Three courses are recent additions.** Teacher Wellbeing is in regular use from early May 2026. Active & Inclusive Learning first appears in the data on 8 July 2026. Keeping Children Safe first appears on 19 August 2026 and is in regular use from 9 September. Keeping Children Safe teaches teachers to recognise signs that a child may be at risk of harm, respond calmly, and refer concerns safely.
 
 Once a teacher picks a course, the intended flow is a short confirmation line — "Great — you've selected [course]. Let's begin!" — followed immediately by the first module. **In practice, a large share of teachers skip straight from picking a course into the module content, with no confirmation message at all.** Both patterns are common; neither is wrong, they're just two different ways the same moment plays out in the real product.
 
@@ -142,11 +149,13 @@ This is the quickest of the three options — a short, immediate activity rather
 
 An energy shifter is a short activity for the classroom (a movement break, a focusing game). A wellbeing moment is a short reset for the teacher themselves. Both are delivered as a title, a short set of steps, and a closing note — generated fresh each time, not from a fixed script.
 
+**Lesson planning** is a separate feature with its own specification, reached when a teacher asks for a lesson plan. The bot first asks six questions: class size and grade level (confirmed from the saved profile), the performance objective, the time available, the materials, how ready the students are, and the challenges to plan for. It then writes a five-step plan (warm-up, I do, we do, you do, wrap-up) and offers to save it or write another version.
+
 ## 8. Inside a course: modules, strategies, and quizzes
 
-Once a teacher is in a course, the structure is the same across all four: a module opens with a short overview of what it covers, then delivers a handful of numbered strategies one at a time ("Strategy 1/5," "Strategy 2/5," and so on), each a short, practical technique the teacher can try. A module usually ends with a short quiz — a few questions checking what the teacher took in, with immediate feedback ("Correct!" or "Almost!") after each answer.
+Once a teacher is in a course, the structure is the same across all six: a module opens with a short overview of what it covers, then delivers a handful of numbered strategies one at a time ("Strategy 1/5," "Strategy 2/5," and so on), each a short, practical technique the teacher can try. A module usually ends with a short quiz — a few questions checking what the teacher took in, with immediate feedback ("Correct!" or "Almost!") after each answer.
 
-Course structure has two layers. Each course has a small number of required "core" modules that unlock one after another. After that, a set of optional "deep dive" modules unlock all at once, and the teacher can take them in any order. Teacher Wellbeing is the one exception — it's fully sequential from start to finish, with no optional deep-dive tier.
+Course structure has two layers. Each course has a small number of required "core" modules, two to four depending on the course, that unlock one after another. After that, a set of optional "deep dive" modules unlocks, and the teacher can take them in any order. Teacher Wellbeing and Keeping Children Safe are fully sequential from start to finish, with no optional deep-dive tier. A module quiz normally needs two of its three questions answered correctly to pass. Keeping Children Safe needs all three. The specification also says a teacher's own claim to have finished is not enough to move on. The bot checks its tracked progress.
 
 The bot sometimes also generates quiz-style content as a *resource for the teacher's own classroom* (eg, "here's a quiz you can use with your students") — this is a different thing from the bot quizzing the teacher on the course material, even though it can look similar at a glance.
 
@@ -156,13 +165,13 @@ Finishing a module (or, for later modules, a deep dive) triggers a short congrat
 
 ## Things worth knowing, still evolving
 
-- **Teacher Wellbeing's rollout** (since May 2026) may be worth double-checking with the product team if it wasn't expected to be live yet.
-- **The Classroom Toolkit's specification lists two more options** beyond what's currently shown to teachers (a "Teacher Wellbeing Plan" and a "Save" feature) — not yet observed in real use, so unclear whether they're built and just not surfaced, or not yet built.
-- **Active & Inclusive Learning and Safeguarding** are both planned but not yet available to teachers.
-- This walkthrough covers Nigeria. The bot also runs in Ecuador (Spanish) and Niger (French), and the exact flow may differ there — not yet reviewed to the same depth.
+- **This walkthrough follows a specification, not a deployment.** It describes the bot's knowledge-base files as of 30 September 2026. No file says which version of the instructions is live. The [bot version guide](bot_version_guide.md) explains how versions differ and how to date a change in the data.
+- **Behind the scenes, the bot summarises the conversation so far on each turn.** That summary decides whether a teacher goes to onboarding or to the menu. Teachers never see it. Whether it is live in production is not known.
+- **The Classroom Toolkit's specification lists two more options** beyond what was shown to teachers in July 2026: a "Teacher Wellbeing Plan" and a "Save" feature. They were not observed in real use then, and this has not been rechecked.
+- This walkthrough covers Nigeria. The bot also runs in Ecuador (Spanish) and Niger (French), and the exact flow may differ there. Ecuador has its own prompt and local-context file. Neither country has been reviewed to the same depth.
 
 ## Sources
 
-Product design documentation: the onboarding script, the pathway/course-selection agent, the Solve a Challenge agent, and the Classroom Toolkit agent specifications, plus one representative module specification. Real examples: live Nigeria conversation data, 2026-07-02/03.
+Product design documentation: the onboarding script, the pathway/course-selection agent, the Solve a Challenge agent, the Classroom Toolkit and Lesson Planning specifications, the course instruction files and the system prompt, as of 30 September 2026. Real examples: live Nigeria conversation data, 2026-07-02/03, and the course menu of 2026-10-02.
 
 *For the data side of this — how each of these moments is (or isn't yet) captured in the analytics pipeline — see [pipeline.md](pipeline.md).*

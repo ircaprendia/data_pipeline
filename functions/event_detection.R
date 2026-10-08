@@ -132,7 +132,7 @@ detect_course_selected <- function(data) {
 # Built 2026-07-03 after tracing real contact histories found course_selected massively
 # undercounts actual course starts (81% of contacts shown the course menu produce no
 # course_selected event -- see event_schema_fixed_strings.md). Deliberately coarse per
-# Philip's scoping: the goal is "did this contact start course X," not precise per-module
+# The project lead's scoping: the goal is "did this contact start course X," not precise per-module
 # timing -- so candidate messages don't need the same exclusion rigor a true module_start
 # detector would (offers, deferred mentions, etc. are left in, since they still corroborate
 # real engagement with that course at a coarse grain). The one exclusion that DOES matter
@@ -140,7 +140,7 @@ detect_course_selected <- function(data) {
 # match without any real evidence of a start.
 #
 # Per-course title patterns and exclusions were derived by reading real message samples for
-# EACH course independently, not by assuming Bianca's canonical titles are sufficient or
+# EACH course independently, not by assuming the product team's canonical titles are sufficient or
 # uniformly reliable -- they are not (see bot_flow_reference.md §3a, §6). Two courses needed
 # real fixes beyond a bare title match, found by checking real 15-message samples:
 #   - Classroom Management: "Sense of Control" alone is an ordinary phrase that appears in
@@ -163,7 +163,7 @@ detect_course_selected <- function(data) {
 # genuine evidence the contact engaged with this course, regardless of which script
 # generation delivered it.
 #
-# CORRECTED 2026-07-03, caught by a recall check Philip asked for (checking precision alone,
+# CORRECTED 2026-07-03, caught by a recall check the project lead asked for (checking precision alone,
 # which is all the initial 15-row spot-checks did per course, is not enough -- a clean
 # sample says nothing about what a pattern MISSES entirely). Cross-validated each course's
 # course_start count against independent evidence (a quiz_interaction resolved to that
@@ -187,7 +187,7 @@ detect_course_selected <- function(data) {
 # FURTHER BROADENED 2026-07-03: cross-validating against independent evidence only catches
 # misses where SOME other course-tier event already exists for the contact -- it can't find
 # a contact whose ONLY trace of a course is the start itself. Ran a second, more aggressive
-# check per Philip's request: loose component-word co-occurrence (eg "explor" + "math" +
+# check at the project lead's request: loose component-word co-occurrence (eg "explor" + "math" +
 # "domain" anywhere in a message, any order, not the exact phrase) to surface title variants
 # the exact-phrase pattern couldn't have found by construction.
 #   - Maths: surfaced a genuine small tail of alternate Module 1 titles beyond "Exploring
@@ -294,7 +294,7 @@ detect_course_start <- function(data) {
 
 
 # Detect course_complete CANDIDATES (pre-filter, not a final detector)
-# Not authored anywhere in Bianca's files -- the Course Instruction files specify the
+# Not authored anywhere in the product team's files -- the Course Instruction files specify the
 # completion *logic* ("Course completes when both Deep Dives are done") but never the
 # message text, which is generated and varies. This is a high-recall pre-filter for an
 # LLM pass, not a standalone detector. Exhaustively reviewed against all 86 raw
@@ -356,7 +356,7 @@ detect_course_complete_candidates <- function(data) {
 
 
 # Detect quiz CANDIDATES (pre-filter, not a final detector)
-# Not authored anywhere in Bianca's files -- quiz feedback is confirmed generated, not
+# Not authored anywhere in the product team's files -- quiz feedback is confirmed generated, not
 # templated (system_prompt.2.0.md §10 mandates rubric-based feedback and forbids
 # near-verbatim reuse). This is a high-recall pre-filter for the LLM pass, which still
 # needs to: extract the actual score/pass-fail result, resolve which course/module the
@@ -634,7 +634,7 @@ consolidate_completion_context <- function(completion_events, context_events) {
 }
 
 
-# Module/deep-dive title -> (course, role) lookup, sourced from Bianca's canonical module
+# Module/deep-dive title -> (course, role) lookup, sourced from the product team's canonical module
 # and deep-dive files (research/aprendia_knowledge_base_catalog.md). "role" distinguishes
 # core modules (required, sequential) from deep dives (unlock together after the core is
 # done, any order) -- v2 courses are semi-sequential: a small sequential core, then all
@@ -647,7 +647,7 @@ consolidate_completion_context <- function(completion_events, context_events) {
 # something regex can safely disambiguate.
 #
 # CORRECTED 2026-07-02: "Shifting Math Mindsets," "Math Process Skills," and "Making Math
-# Hands-On" were originally listed as deep_dive per Bianca's course-instruction spec, which
+# Hands-On" were originally listed as deep_dive per the product team's course-instruction spec, which
 # describes v2 courses as small sequential core + simultaneously-unlocking deep dives. Real
 # data contradicts this for these three titles specifically: checked ALL 93
 # collision-title deep_dive_complete rows in the live data (not a sample) -- every single
@@ -655,9 +655,9 @@ consolidate_completion_context <- function(completion_events, context_events) {
 # Module N+1," "Ready to start Module N+1 now?"), and ZERO show non-linear framing ("any
 # order," "simultaneously," "explore any of these"). A 30-row LLM test batch independently
 # corrected 15/15 sampled instances the same direction before this full-population check
-# confirmed it wasn't sampling noise. Whatever Bianca's spec intends, the deployed Math
+# confirmed it wasn't sampling noise. Whatever the product team's spec intends, the deployed Math
 # course delivers these three titles as sequential core modules 2-4, not free-order deep
-# dives -- worth a bug report to Bianca (design-vs-delivery mismatch), not treated as a
+# dives -- worth a bug report to the product team (design-vs-delivery mismatch), not treated as a
 # taxonomy fact to build further detection logic around. Corrected to "core" here rather
 # than routed through the module_role LLM job, since the evidence is unambiguous across the
 # full population, not a per-message judgment call -- same discipline as every other
@@ -914,7 +914,7 @@ detect_challenge_delivered <- function(data) {
 # they're from in the message itself.
 #
 # KNOWN LIMITATION, different in kind from module_title_lookup: course/module titles
-# come from Bianca's canonical course files, a genuinely closed set worth building a
+# come from the product team's canonical course files, a genuinely closed set worth building a
 # lookup table for. Energizer/wellbeing titles ("Shake It Out", "Feeling Check-in") are
 # generated per-response, not drawn from a fixed spec -- some recur across messages but
 # there's no canonical source list, so a title-based lookup isn't buildable the way it

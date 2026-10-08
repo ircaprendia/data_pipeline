@@ -27,7 +27,7 @@ The pipeline writes a small set of tables; the [codebook](codebook.md) defines e
 - **`session_data`** — one row per session. Consecutive messages from the same teacher are grouped into a session. A gap of more than 90 minutes starts a new one (the threshold is set in each country's config). Each session records its length, the count of messages in and out, and the in/out interaction ratio.
 - **`session_data_long`** — `session_data` extended with churn and reactivation. A teacher is counted as churned once 14 days pass with no message, and as reactivated if they return after churning (both thresholds are config parameters).
 - **`contacts_data`** — one row per teacher per country. Each teacher's sessions roll up into totals and averages — number of messages and sessions, average messages per session, average time between messages, interaction ratio, and first-week behaviour. For Nigeria it also carries the engagement cluster, calculated via a k-means clustering algorithm.
-- **`event_schema`** — one row per detected fact (course selected, quiz passed, module completed, class size reported at onboarding). Nigeria only, see the event schema below.
+- **`onboarding_attempts` and `onboarding_answers`** — the onboarding schema's two long tables (Nigeria only), built from the reading agents' results by an analysis-side script and not published. See the onboarding schema below.
 
 The engagement clusters come from k-means on these per-teacher features (Nigeria only). Tenure is capped before clustering, so teachers who have simply been in the programme longer are not favoured by having accumulated more activity.
 
@@ -41,15 +41,21 @@ Each session is labelled by type: module progression, question, lesson request, 
 
 Its status is provisional. A pilot compared the rule classifier and the LLM and found substantial disagreement — which measures disagreement between the two systems, not the accuracy of either. A human-labelled reference set is needed to arbitrate and is the next step; until then the labels are treated as directional.
 
-### Event schema
+### Onboarding schema
 
-The event schema is a log of timestamped facts about a teacher: course selected, module completed, quiz passed, class size reported at onboarding. It replaced a wide table of one-off flags that had no audit trail and could not record a teacher correcting an earlier answer.
+The onboarding schema has a language model read each conversation in full and fill in a structured record. It records where onboarding started, how far it got, what the teacher answered, and why any answer is missing. It exists because the bot rewords everything, so a fixed text search cannot find every onboarding conversation or read every answer.
 
-Each fact records its detection method, a confidence, and the source message; nothing is overwritten. Detection runs in two tiers — a fixed-string tier for the parts of the bot's output that are stable, and an LLM tier for everything else. Each detector is checked two ways before use: precision (are the flagged events real?) and recall (are real events missed?). This is first-pass validation by reading real messages; a formal labelled reference set is the planned next step, and figures are treated as directional until it exists.
+Two tasks feed it. In one, the pipeline's start detector has already found an onboarding start, and the agent reads that range. In the other, the detector found nothing, and the agent reads the whole history and decides whether onboarding happened under other wording. Each answer carries the teacher's own words and the message it came from, so a reader can check any record. About one item in ten is read a second time, independently, so that agreement between readers can be measured. Two readers agreeing shows consistency, not correctness.
 
-## What the event schema supports
+[The onboarding schema page](onboarding_schema.md) describes the method and the instructions the agents follow. The [codebook](codebook.md), Level 4, defines the tables.
 
-Because facts are logged per teacher over time, a teacher's path through a course can be traced end to end — course start, quiz attempt, correct or incorrect answer, module completion, course completion — and compared across courses as a funnel. The same per-teacher facts feed the engagement clustering.
+### An earlier event schema, and the engagement schema to come
+
+An earlier event schema logged timestamped facts about a teacher (course selected, module completed, quiz passed). It is no longer live. An engagement schema, covering courses, modules and quizzes, is in development and will take its place. The functions that built the event schema are kept in `functions/` for reference.
+
+## What the onboarding schema supports
+
+Because every answer and every missing reason is recorded with the message it came from, onboarding can be traced and compared by script: how far teachers get, which questions go unanswered and why, and which teachers never onboarded and what they did instead. Coverage is partial, because reading proceeds in batches.
 
 ## The code
 
@@ -58,7 +64,7 @@ The pipeline is R:
 ```         
 config/      per-country parameters — timezones, group definitions, clustering settings
 functions/   the building blocks — cleaning, session sequencing, aggregation,
-             classification, clustering, event detection and resolution, dashboard charts
+             classification, clustering, dashboard charts, and the retired event-schema detectors
 scripts/     the ordered stages: 00_load → 01_clean → 02_aggregate → {country}/05_dashboard,
              with Nigeria adding nigeria/03_classify → nigeria/04_cluster first.
              run_all.R runs the whole chain; run_{country}.R runs the prep plus one country

@@ -10,9 +10,11 @@ aprendIA is an open product, and this repository is public. It contains methods,
 
 - 🌐 [**aprendia.io**](https://aprendia.io/) — the product site.
 - 💬 [**Bot flow reference**](bot_flow_reference.md) — the teacher's journey through the product, in plain language.
+- 🗂️ [**Bot version guide**](bot_version_guide.md) — how the bot's versions differ, and how to date a change.
 - ⚙️ [**How the pipeline works**](pipeline.md) — how a chat log becomes analysis-ready tables.
 - 🧩 [**Code reference**](code_reference.md) — what each script and function does.
 - 📖 [**Codebook**](codebook.md) — the data dictionary.
+- 🧪 [**Onboarding schema**](onboarding_schema.md) — how onboarding is read from conversations and turned into data.
 - 📊 [**Live dashboard**](https://philipblue.shinyapps.io/aprendia-dashboard/) — weekly usage and course engagement per country.
 - 🎨 [**Palette guide**](palette_guide.md) — the dashboard's colour system.
 
@@ -35,7 +37,7 @@ The raw export is a chat log — one row per message. The pipeline constructs th
 The bot does not reuse wording, so fixed-phrase matching is only a part of the solution. Two systems address this:
 
 - **Session classification** labels each conversation by type (module progression, question, translation request, and so on). A rule-based classifier runs for Nigeria (English and Hausa); a multilingual version built on a large language model (LLM) is in validation, intended to cover all three countries.
-- **Event schema** is a log of time-stamped facts about a teacher (course selected, quiz passed, class size reported). Detection uses fixed-string matching where the bot's text is stable, and an LLM where it is not. Each detector is checked for precision and recall before its output is used.
+- **Onboarding schema** has a language model read each conversation in full and record where onboarding began, how far it got, and what the teacher answered. It is described on [its own page](onboarding_schema.md). An earlier event schema, a log of time-stamped facts about a teacher, is no longer live. An engagement schema, covering courses, modules and quizzes, is in development.
 
 [How the pipeline works](pipeline.md) describes both in full.
 

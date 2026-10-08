@@ -63,7 +63,9 @@ This is the code dictionary — the companion to the [codebook](codebook.md), wh
 - **`summarise_cluster_profiles()`** — a reporting helper: average values of the key engagement features, one row per cluster, for sense-checking that "Power users" and "Occasional users" actually look the way those names imply.
 - **`apply_cluster_factor()`** / **`apply_cluster_labels()`** — turn the numeric cluster IDs into ordered, human-readable factor labels ("Power users" / "Occasional users") using the lookup tables in the country config, so charts sort and colour consistently rather than by an arbitrary cluster number.
 
-### `functions/event_detection.R` — the event schema's R-based detectors
+### `functions/event_detection.R` — the event schema's R-based detectors (retired)
+
+*The event schema is no longer live, and an engagement schema is in development. The three event-schema files below are retained for reference.*
 
 Each `detect_*()` function scans the cleaned messages for one kind of fact and returns rows in the event schema's shape (`contact_id`, `event_type`, `event_date`, `value`, `detection_method`, `confidence`, `source_version_id`, `source_message_id`, `session_id`). Several are marked `"R_prefilter"` rather than a final `"R"` detection method — these are high-recall filters meant to hand candidates to the LLM resolution stage, not final answers on their own.
 
@@ -82,7 +84,7 @@ Each `detect_*()` function scans the cleaned messages for one kind of fact and r
 - **`detect_toolkit_content_delivered()`** — flags a Classroom Toolkit delivery (structured `Title:`/`Steps:`/`Notice:` block), and resolves it to `energizer_delivered` or `wellbeing_moment_delivered` specifically when the framing sentence names which branch it is.
 - **`detect_onboarding_facts()`** — for each fixed onboarding question, finds the first time a contact was ever asked it, then walks forward through their replies — skipping junk acknowledgments and any reply the bot itself rejected with a retry message — to find the one that actually answers it, rather than naively pairing the question with whatever message comes immediately after.
 
-### `functions/event_llm_resolution.R` — the event schema's LLM resolution tier
+### `functions/event_llm_resolution.R` — the event schema's LLM resolution tier (retired)
 
 There is no wired-up API call yet, so this file manages a **cache**, not a live model connection: resolution happens by hand (via Claude Code), and these functions handle deciding what's new, merging results in, and turning the cache into event-schema-shaped rows.
 
@@ -93,7 +95,7 @@ There is no wired-up API call yet, so this file manages a **cache**, not a live 
 - **`update_llm_cache()`** — merges validated results into the job's cache file, replacing only the rows that actually changed.
 - **`build_onboarding_llm_event_rows()`**, **`build_quiz_interaction_llm_event_rows()`**, **`build_module_role_llm_event_rows()`**, **`build_toolkit_branch_llm_event_rows()`** — job-specific functions turning each cache's raw resolved columns into proper event-schema rows, ready to combine with the R-detected ones. Not interchangeable: each job's result shape is different enough (a single normalised value vs. three resolved fields vs. a role reclassification) that one generic function would either lose structure or carry a pile of unused columns.
 
-### `functions/event_schema_resolve.R` — one row per fact
+### `functions/event_schema_resolve.R` — one row per fact (retired)
 
 - **`resolve_event_schema()`** — the function behind the clean, analysis-ready `event_schema` table. Where both an R-detected row and an LLM-resolved row exist for the same message, the LLM's version wins (it's later evidence, one level of resolution) — and where the R tier only produced a "there's *something* here but I can't tell which fact" placeholder that the LLM has since sorted into a specific event type, the placeholder is dropped so the same real-world event isn't counted twice. Nothing is deleted from the underlying audit table — this is a downstream, read-only view.
 
