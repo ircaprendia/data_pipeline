@@ -17,5 +17,9 @@ local_identifiers.R
 .RData
 .Ruserdata
 
+# Deployment account metadata
+rsconnect/
+*.dcf
+
 # OS
 .DS_Store

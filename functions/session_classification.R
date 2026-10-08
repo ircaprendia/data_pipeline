@@ -38,6 +38,11 @@
 #                   teacher's messages, checked before the short-session gate so brief requests
 #                   are not lost to Micro-session. Lower recall than the LLM (misses implicit
 #                   "what is X in Hausa"). Cache version bumped to recompute.
+#
+# 2026-09-08  Renamed course_selected -> course_selected_legacy (the field-reliability audit, summarised in the codebook
+#             Phase 2). Field itself unchanged, still matches emoji-menu wording dead since Nov
+#             2025 and not repaired. Disambiguates from the clean course_selected/course_start
+#             events in data/nigeria/event_schema.csv, which are the intended replacement.
 
 library(tidyverse)
 library(stringr)
@@ -64,20 +69,30 @@ classify_session <- function(session_id, msgs_per_session, in_msgs_per_session,
   # ========== DETECT UNIVERSAL FLAGS (check for all sessions) ==========
 
   # Flag 1: Started with reminder
-  started_with_reminder <- str_detect(all_msg_lower, regex(
+  # Fixed 2026-09-08 (the field-reliability audit, summarised in the codebook tier-D repair): was scanning all_msg_lower
+  # (the whole session transcript) with no direction check, so a reminder phrase appearing later
+  # in an incoming-initiated session set this TRUE even though the session did not start with one
+  # (947/57,081 sessions, 1.7%, violated the "must start Outgoing" invariant). Restricted to the
+  # session's actual first message, and only when that message is the bot's (start_direction ==
+  # "Outgoing"). Wording-independent fix — does not depend on current bot template strings.
+  started_with_reminder <- start_direction == "Outgoing" && str_detect(first_msg_lower, regex(
     "hi again|ready to pick up where you left off|welcome back|i was having some technical issues",
     ignore_case = TRUE
   ))
 
-  # Flag 2: Course selected
-  course_selected <- str_detect(all_msg_lower, "course selection") ||
+  # Flag 2: Course selected — matches emoji-menu wording dead since Nov 2025 (tier C, see
+  # the field-reliability audit, summarised in the codebook) and has no reach into the current bot at all. Renamed
+  # course_selected -> course_selected_legacy 2026-09-08 to disambiguate from the clean
+  # `course_selected`/`course_start` events in data/nigeria/event_schema.csv, which are the
+  # intended replacement (see the retired event schema). Not repaired — retire, don't rebuild.
+  course_selected_legacy <- str_detect(all_msg_lower, "course selection") ||
     str_detect(all_msg, "Reading 📚|Math ➕|Classroom 📘")
 
   # Flag 3: Which course
   # KNOWN BUG: which_course scans all_messages (full session transcript including bot messages).
   # The bot's course selection menu always displays all three options — "Reading 📚", "Math ➕",
   # "Classroom 📘" — so "reading" matches first in case_when regardless of what the teacher
-  # actually selected. Result: course_selected sessions are almost all classified as "Reading".
+  # actually selected. Result: course_selected_legacy sessions are almost all classified as "Reading".
   # Use select_reading / select_maths / select_classroom_mgmt from clean_message_data instead —
   # those look only at the teacher's incoming message and correctly identify the chosen course.
   which_course <- case_when(
@@ -94,11 +109,21 @@ classify_session <- function(session_id, msgs_per_session, in_msgs_per_session,
   ))
 
   # Flag 5: Asked question (NEW - captures all question behavior)
-  asked_question <- str_detect(first_user_msg, "\\?") ||
-    str_detect(first_user_msg_lower, regex(
-      "how|what|why|when|where|who|can you|could you|would you|menene|yaya|don me|wa|ina|yaushe",
-      ignore_case = TRUE
-    ))
+  # Fixed 2026-09-08 (the field-reliability audit, summarised in the codebook tier-D repair): two bugs.
+  # (1) When the teacher sent no incoming message, first_user_msg fell back to the bot's own
+  #     first message (line 54), so the bot's phrasing was scored as a question the teacher
+  #     asked — 13,991/57,081 sessions (24.5%) violated the "requires >=1 incoming message"
+  #     invariant. Now short-circuits to FALSE when in_msgs_per_session == 0.
+  # (2) The pattern lacked word boundaries, so short tokens (wa, ina, who) matched inside
+  #     unrelated words (want, thinking, whole). Added \\b boundaries around every alternative.
+  # Both fixes are wording-independent — generic question words, not bot template strings.
+  asked_question <- in_msgs_per_session > 0 && (
+    str_detect(first_user_msg, "\\?") ||
+      str_detect(first_user_msg_lower, regex(
+        "\\b(how|what|why|when|where|who|can you|could you|would you|menene|yaya|don me|wa|ina|yaushe)\\b",
+        ignore_case = TRUE
+      ))
+  )
 
   # ========== PRIORITY 1: Bot outreach with no response ==========
   if (start_direction == "Outgoing" && in_msgs_per_session == 0) {
@@ -109,7 +134,7 @@ classify_session <- function(session_id, msgs_per_session, in_msgs_per_session,
       subtype = NA_character_,
       module_number = NA_character_,
       started_with_reminder = started_with_reminder,
-      course_selected = course_selected,
+      course_selected_legacy = course_selected_legacy,
       which_course = which_course,
       completed_quiz = completed_quiz,
       asked_question = asked_question,
@@ -145,7 +170,7 @@ classify_session <- function(session_id, msgs_per_session, in_msgs_per_session,
       subtype = NA_character_,
       module_number = NA_character_,
       started_with_reminder = started_with_reminder,
-      course_selected = course_selected,
+      course_selected_legacy = course_selected_legacy,
       which_course = which_course,
       completed_quiz = completed_quiz,
       asked_question = asked_question,
@@ -170,7 +195,7 @@ classify_session <- function(session_id, msgs_per_session, in_msgs_per_session,
       subtype = NA_character_,
       module_number = NA_character_,
       started_with_reminder = started_with_reminder,
-      course_selected = course_selected,
+      course_selected_legacy = course_selected_legacy,
       which_course = which_course,
       completed_quiz = completed_quiz,
       asked_question = asked_question,
@@ -221,7 +246,7 @@ classify_session <- function(session_id, msgs_per_session, in_msgs_per_session,
       subtype = subtype,
       module_number = NA_character_,
       started_with_reminder = started_with_reminder,
-      course_selected = course_selected,
+      course_selected_legacy = course_selected_legacy,
       which_course = which_course,
       completed_quiz = completed_quiz,
       asked_question = asked_question,
@@ -252,7 +277,7 @@ classify_session <- function(session_id, msgs_per_session, in_msgs_per_session,
       subtype = NA_character_,
       module_number = NA_character_,
       started_with_reminder = started_with_reminder,
-      course_selected = course_selected,
+      course_selected_legacy = course_selected_legacy,
       which_course = which_course,
       completed_quiz = completed_quiz,
       asked_question = asked_question,
@@ -302,7 +327,7 @@ classify_session <- function(session_id, msgs_per_session, in_msgs_per_session,
       subtype = subtype,
       module_number = module_number,
       started_with_reminder = started_with_reminder,
-      course_selected = course_selected,
+      course_selected_legacy = course_selected_legacy,
       which_course = which_course,
       completed_quiz = completed_quiz,
       asked_question = asked_question,
@@ -358,7 +383,7 @@ classify_session <- function(session_id, msgs_per_session, in_msgs_per_session,
       subtype = subtype,
       module_number = NA_character_,
       started_with_reminder = started_with_reminder,
-      course_selected = course_selected,
+      course_selected_legacy = course_selected_legacy,
       which_course = which_course,
       completed_quiz = completed_quiz,
       asked_question = asked_question,
@@ -419,7 +444,7 @@ classify_session <- function(session_id, msgs_per_session, in_msgs_per_session,
         subtype = subtype,
         module_number = NA_character_,
         started_with_reminder = started_with_reminder,
-        course_selected = course_selected,
+        course_selected_legacy = course_selected_legacy,
         which_course = which_course,
         completed_quiz = completed_quiz,
         asked_question = asked_question,
@@ -445,7 +470,7 @@ classify_session <- function(session_id, msgs_per_session, in_msgs_per_session,
       subtype = NA_character_,
       module_number = NA_character_,
       started_with_reminder = started_with_reminder,
-      course_selected = course_selected,
+      course_selected_legacy = course_selected_legacy,
       which_course = which_course,
       completed_quiz = completed_quiz,
       asked_question = asked_question,
@@ -469,7 +494,7 @@ classify_session <- function(session_id, msgs_per_session, in_msgs_per_session,
       subtype = NA_character_,
       module_number = NA_character_,
       started_with_reminder = started_with_reminder,
-      course_selected = course_selected,
+      course_selected_legacy = course_selected_legacy,
       which_course = which_course,
       completed_quiz = completed_quiz,
       asked_question = asked_question,
@@ -489,7 +514,7 @@ classify_session <- function(session_id, msgs_per_session, in_msgs_per_session,
     subtype = NA_character_,
     module_number = NA_character_,
     started_with_reminder = started_with_reminder,
-    course_selected = course_selected,
+    course_selected_legacy = course_selected_legacy,
     which_course = which_course,
     completed_quiz = completed_quiz,
     asked_question = asked_question,
@@ -539,7 +564,7 @@ classify_all_sessions <- function(session_df) {
         if_else(is.na(mn), NA_character_, mn)
       }),
       started_with_reminder = map_lgl(classification, "started_with_reminder"),
-      course_selected = map_lgl(classification, "course_selected"),
+      course_selected_legacy = map_lgl(classification, "course_selected_legacy"),
       which_course = map_chr(classification, function(x) {
         wc <- x$which_course
         if_else(is.na(wc), NA_character_, wc)
@@ -554,7 +579,7 @@ classify_all_sessions <- function(session_df) {
 
   cat("New flags detected:\n")
   cat("  Reminders:", sum(results$started_with_reminder), "\n")
-  cat("  Course selections:", sum(results$course_selected), "\n")
+  cat("  Course selections:", sum(results$course_selected_legacy), "\n")
   cat("  Quizzes completed:", sum(results$completed_quiz), "\n")
   cat("  Questions asked:", sum(results$asked_question), "\n\n")
 
@@ -605,7 +630,7 @@ summarise_classification <- function(classified_df) {
 # The ten classifier outputs that classify_all_sessions adds to a session frame.
 classifier_output_cols <- c(
   "engagement_level", "session_type", "subtype", "module_number",
-  "started_with_reminder", "course_selected", "which_course",
+  "started_with_reminder", "course_selected_legacy", "which_course",
   "completed_quiz", "asked_question", "interaction_ratio"
 )
 
@@ -623,7 +648,7 @@ classification_cache_col_types <- cols(
   subtype = col_character(),
   module_number = col_character(),
   started_with_reminder = col_logical(),
-  course_selected = col_logical(),
+  course_selected_legacy = col_logical(),
   which_course = col_character(),
   completed_quiz = col_logical(),
   asked_question = col_logical(),

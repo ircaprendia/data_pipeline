@@ -1,6 +1,6 @@
 # aprendIA — resolve event_schema's two-tier (R_prefilter/LLM) rows into one clean value
 # per fact. event_schema_audit.csv itself is never collapsed -- both tiers stay on disk for audit
-# (per the provenance discipline in ai_led_analysis/event_schema/event_schema_design.md). This is a downstream,
+# (per the provenance discipline in the event schema design note). This is a downstream,
 # read-only view for analysis, answering the "should contacts_data prefer LLM over
 # R_prefilter" open question in llm_onboarding_enum_schema_v1.md.
 #

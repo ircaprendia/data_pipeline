@@ -9,6 +9,17 @@ girafe_opts <- list(
   opts_tooltip(css = "background:white;border:1px solid #ccc;border-radius:4px;padding:8px 10px;font-family:Inter,sans-serif;font-size:13px;line-height:1.5;"),
   opts_sizing(rescale = TRUE)
 )
+# ── Course engagement chart — parked 2026-09-08 ────────────────
+# Phase 1 of the field-reliability audit, summarised in the codebook: both panels rest on fields the
+# survey found unfit — classroom_mod1_start is dark since 2026-04-30; reading_
+# and maths_mod1_start are live but at ~5% of prior recall with ~25% false
+# positives; module_progression's subtype match keywords across the whole
+# transcript with no speaker filter. Data computation and the RDS output in
+# scripts/nigeria/05_dashboard.R are untouched — flip this to TRUE once the
+# fields are rebuilt (Phase 2) or replaced by bot-emitted events (Phase 4).
+# See the codebook, 2026-09-08.
+course_engagement_chart_enabled <- FALSE
+
 # dashboard_ui()     — builds the tab content (sidebar + charts)
 # dashboard_server() — reactive logic and renderPlot calls
 #
@@ -167,7 +178,7 @@ dashboard_ui <- function(id, config, data) {
         ),
 
         # ── Chart CE: Course engagement (Nigeria only) ────────
-        if (!is.null(data$course_engagement))
+        if (!is.null(data$course_engagement) && course_engagement_chart_enabled)
           card(full_screen = TRUE,
             card_header(div(
               div(style = "font-family: 'Overpass', sans-serif; font-weight: 700; font-size: 1.2rem;",
@@ -390,7 +401,7 @@ dashboard_server <- function(id, data, config) {
       girafe(ggobj = p, width_svg = 10, height_svg = 6, options = girafe_opts)
     })
 
-    if (!is.null(data$course_engagement)) {
+    if (!is.null(data$course_engagement) && course_engagement_chart_enabled) {
       ce_use_dates <- reactive({ isTRUE(input$use_dates) && input$time_var == "impl_week" })
       ce_cohort    <- reactive({ if (is.null(input$ce_cohort)) "All" else input$ce_cohort })
 

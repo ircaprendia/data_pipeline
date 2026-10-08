@@ -23,6 +23,10 @@ The second version of the dashboard draws its data colours from **Sanzo Wada com
 
 ---
 
+## Brand palette
+
+The ramps, colour roles and general rules below are the aprendIA brand palette. They apply to product and other materials. Dashboard v2 uses the Wada colours above for its data, so the cluster, pilot and lifecycle assignments further down do not apply to it.
+
 ## The palette at a glance
 
 Six hue ramps, each running ten stops from near-white (50) to near-black (900), plus Black and White as fixed anchors. Each ramp has a **base stop** — the primary use value, shown in bold below — and lighter or darker stops for backgrounds, borders, and type.
@@ -98,7 +102,9 @@ Red is reserved for states that require intervention. It should never appear as 
 
 ------------------------------------------------------------------------
 
-## Specific pairings
+## First dashboard (v1, archived): specific pairings
+
+These assignments describe the first dashboard (`app.R`), now archived. Dashboard v2 does not use them. They are kept for reference and for reading older charts. One discrepancy: in the lifecycle table below, Reactivated is Teal, but the first dashboard's code colours reactivated users Violet.
 
 ### Pilot vs scale-up
 

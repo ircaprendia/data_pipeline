@@ -22,6 +22,13 @@ churn_threshold <- 14 * 24 * 60 * 60  # 14 day threshold in seconds
 session_classification <- TRUE  # Run session classifier in step 2 (Nigeria only)
 
 # Nigeria parameters
+# The raw download lives outside the repo, at the path set in .Renviron
+# (gitignored, so it must be recreated in every clone). Fail here with a usable
+# message rather than later on a path that silently resolves to a bare filename.
+if (!nzchar(Sys.getenv("aprendia_data_path"))) {
+  stop("aprendia_data_path is not set — .Renviron is gitignored and must be recreated per repo. It should point at the offline_data location holding the raw download.")
+}
+
 # Bot phone numbers and test-user names live in config/local_identifiers.R
 # (gitignored — real names and production numbers stay out of the tracked repo)
 if (!file.exists("config/local_identifiers.R")) {
@@ -74,7 +81,19 @@ clustering_exclude_vars <- c(
   "phone_num_match", "select_classroom_mgmt", "select_maths", "select_reading", "group", "start_week",
   "days_until_second_session", "user_phone_country",
   # Cluster output columns from previous run — present in contacts_data.csv on re-runs
-  "cluster", "cluster_group", "cluster_label", "cluster_order", "cluster_group_label", "cluster_group_order"
+  "cluster", "cluster_group", "cluster_label", "cluster_order", "cluster_group_label", "cluster_group_order",
+  # Phase 1 of the field-reliability audit, summarised in the codebook (2026-09-07/08): restrict clustering
+  # to tier-A (era-invariant) features only. The `_start` module flags are already caught by
+  # step_rm(contains("_start")) in functions/clustering.R; these are the remaining B/D/E-tier
+  # fields that survived to contacts_data.csv without being excluded.
+  # Tier B (bot-template detectors, dark since 2026): select_course, select_question, and the
+  # module-start sums they roll up into.
+  "select_course", "select_question", "classroom_modules", "maths_modules", "reading_modules",
+  "asked_question_week_one", "selected_course_week_one",
+  # Tier D (mixed-source, speaker-blind) and E (rule-based session typing, unvalidated):
+  "pct_sessions_with_reminder", "ever_completed_quiz",
+  "n_module_sessions", "n_question_sessions", "n_lesson_sessions", "n_onboarding_sessions",
+  "pct_substantive_sessions", "n_session_types"
 )
 
 # Cluster labels (update after reviewing cluster profiles)

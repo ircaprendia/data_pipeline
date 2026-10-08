@@ -9,15 +9,20 @@ The raw export is one row per message: sender, recipient, timestamp, and text. I
 ## The stages
 
 ```         
-raw chat log   →   clean   →   aggregate   →   classify   →   cluster   →   dashboard
-  (outside          (per        (sessions,      (session       (engag.       (per
-   the repo)         message)    teachers)       types)         types)        country)
+raw chat log → update repository → load → clean → aggregate → classify → cluster → dashboard
+  (outside        (merge new        (test     (per         (sessions,    (session     (engag.      (Nigeria,
+   the repo)       exports)         users      message)     teachers)     types)       segments)    deployed)
+                                    removed)
 ```
 
-- **Clean** removes test users, standardises timestamps to each country's local time, and derives per-message features.
+- **Update repository** merges each new export into a permanent, deduplicated message store held outside this repository. If a backup location is configured, it also writes an off-machine backup.
+- **Load** reads that store and removes test users.
+- **Clean** standardises timestamps to each country's local time and derives per-message features.
 - **Aggregate** groups messages into sessions and rolls sessions up into per-teacher histories.
-- **Classify and cluster** (Nigeria only) label each session by type and assign each teacher to an engagement cluster. Ecuador and Niger run the first two stages but not these.
-- **Dashboard** reads pre-computed per-country aggregates.
+- **Classify and cluster** (Nigeria only) label each session by type and assign each teacher to an engagement cluster. Ecuador and Niger run the first stages but not these.
+- **Dashboard** reads pre-computed aggregates. The current dashboard (`dashboard_v2/`, Nigeria only) reads one data model built in `scripts/nigeria/05_dashboard.R`. The archived first dashboard (`app.R`) reads per-country aggregates.
+
+Alongside this chain, a second track uses language-model agents to read conversations and produce the onboarding tables. It is described under [Onboarding schema](#onboarding-schema) below. The dashboard's third row is built from it.
 
 ## The datasets
 
@@ -65,10 +70,11 @@ The pipeline is R:
 config/      per-country parameters — timezones, group definitions, clustering settings
 functions/   the building blocks — cleaning, session sequencing, aggregation,
              classification, clustering, dashboard charts, and the retired event-schema detectors
-scripts/     the ordered stages: 00_load → 01_clean → 02_aggregate → {country}/05_dashboard,
+scripts/     the ordered stages: update_repository → 00_load → 01_clean → 02_aggregate → {country}/05_dashboard,
              with Nigeria adding nigeria/03_classify → nigeria/04_cluster first.
              run_all.R runs the whole chain; run_{country}.R runs the prep plus one country
-app.R        the Shiny dashboard (one tab per country)
+dashboard_v2/  the current Shiny dashboard (Nigeria), a self-contained folder that deploys on its own
+app.R        the first Shiny dashboard (one tab per country), archived
 ```
 
 What each script and function actually does — a plain-English walkthrough, not just the directory-level summary above — is in the [code reference](code_reference.md).

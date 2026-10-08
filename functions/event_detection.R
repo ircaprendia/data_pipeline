@@ -3,8 +3,8 @@
 # R-based (regex) detectors, for the events confirmed reliable enough to detect this
 # way -- either because the source text is authored verbatim (course_selected), or
 # because the pattern has been exhaustively reviewed and locked in as a high-recall
-# pre-filter for a later LLM pass (course_complete). See ai_led_analysis/event_schema/event_schema_design.md
-# and ai_led_analysis/event_schema/event_schema_fixed_strings.md for the full sourcing/verification record
+# pre-filter for a later LLM pass (course_complete). See the event schema design note
+# and the event schema's fixed-string sourcing record for the full sourcing/verification record
 # behind each pattern below -- do not edit a regex here without updating those docs to
 # match, since they're what makes the regex trustworthy rather than guessed.
 #
@@ -1041,7 +1041,7 @@ onboarding_retry_message_pattern <- "i didn't catch that|please answer using a v
 # triggering a retry -- the live bot doesn't always enforce its own validation rules.
 # These correctly pass through to event_schema as the recorded "answer"; catching them
 # is exactly what the LLM enum-resolution stage's `null` output is for (see
-# ai_led_analysis/event_schema/llm_onboarding_enum_schema_v1.md), not something to solve here.
+# the onboarding enum schema note), not something to solve here.
 # Arguments:
 #   data: clean_message_data, Nigeria, both directions
 # Returns: one row per contact per onboarding field (at most one row per contact per

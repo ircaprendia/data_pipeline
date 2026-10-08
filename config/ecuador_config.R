@@ -13,6 +13,13 @@ session_timeout <- 1200  # Set in seconds (20 minutes)
 churn_threshold <- 14 * 24 * 60 * 60  # 14 day threshold in seconds
 
 # Ecuador parameters
+# The raw download lives outside the repo, at the path set in .Renviron
+# (gitignored, so it must be recreated in every clone). Fail here with a usable
+# message rather than later on a path that silently resolves to a bare filename.
+if (!nzchar(Sys.getenv("aprendia_data_path"))) {
+  stop("aprendia_data_path is not set — .Renviron is gitignored and must be recreated per repo. It should point at the offline_data location holding the raw download.")
+}
+
 # Bot phone numbers and test-user names live in config/local_identifiers.R
 # (gitignored — real names and production numbers stay out of the tracked repo)
 if (!file.exists("config/local_identifiers.R")) {

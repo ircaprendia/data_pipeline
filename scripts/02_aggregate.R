@@ -74,3 +74,58 @@ cat("\nSaved:\n")
 cat("  - data/session_data.csv\n")
 cat("  - data/session_data_long.csv\n")
 cat("  - data/contacts_data.csv\n")
+
+#### Run manifest ####
+# Appended once per run, one row per country. data/ is shared with the analysis repo by symlink,
+# so this is the only record of when the numbers behind a given figure were produced. Any later
+# analysis can state "data as of X" from here instead of guessing at file timestamps.
+# NA handling is deliberate: n_time_missing is recorded as a column rather than dropped quietly,
+# so na.rm below cannot hide a parsing problem in time_corrected.
+
+# --dirty matters here: HEAD alone would claim the figures came from a committed state when the
+# working tree may have uncommitted edits. A "-dirty" suffix says the running code is not any
+# commit, which is the honest answer to "what produced this number".
+pipeline_sha <- tryCatch(
+  {
+    sha <- suppressWarnings(
+      system("git describe --always --dirty", intern = TRUE, ignore.stderr = TRUE)
+    )
+    if (length(sha) == 1 && nzchar(sha)) sha else NA_character_
+  },
+  error = function(e) NA_character_
+)
+
+run_manifest <- clean_message_data %>%
+  group_by(country) %>%
+  summarise(
+    messages = n(),
+    n_time_missing = sum(is.na(time_corrected)),
+    data_min = min(time_corrected, na.rm = TRUE),
+    data_max = max(time_corrected, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  left_join(
+    contacts_data %>% count(country, name = "contacts"),
+    by = "country"
+  ) %>%
+  left_join(
+    session_data %>% count(country, name = "sessions"),
+    by = "country"
+  ) %>%
+  mutate(
+    run_at = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
+    pipeline_sha = pipeline_sha
+  ) %>%
+  select(
+    run_at, pipeline_sha, country, messages, contacts, sessions,
+    data_min, data_max, n_time_missing
+  )
+
+write_csv(
+  run_manifest,
+  "data/run_manifest.csv",
+  append = file.exists("data/run_manifest.csv")
+)
+
+cat("\nRun manifest appended — data/run_manifest.csv\n")
+print(run_manifest %>% select(country, messages, contacts, sessions, data_max))

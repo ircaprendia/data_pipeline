@@ -6,6 +6,8 @@ This is the code dictionary — the companion to the [codebook](codebook.md), wh
 
 ### Universal (all countries)
 
+**`scripts/update_repository.R`** — the first stage. Run after each new Telerivet download. Merges the latest export into the permanent message repository, which lives outside this repository, adding only new rows. On a first run it seeds the repository from every dated archive file it finds. When new rows were added and a backup location is configured (`aprendia_backup_path` in `.Renviron`), it also writes a rolling backup copy and a dated snapshot. If no location is set, the backup is skipped.
+
 **`scripts/00_load_raw_data.R`** — reads `aprendia_message_repository.csv` (the permanent, deduplicated store of every message, all countries, kept outside this repository), strips test-user rows using the gitignored `config/local_identifiers.R`, and sets `raw_message_data` in the environment. Every other script depends on this having run first.
 
 **`scripts/01_clean.R`** — loops over Nigeria, Ecuador, and Niger. For each, it sources that country's config (which isolates the country by its phone numbers), runs `clean_messages()` and the feature-adding functions below, stamps a `country` column, then unions all three into one combined table. Writes `data/clean_message_data.csv`. Ends with a sanity check: no `contact_id` should appear under more than one country, since each is anonymised once across the whole repository.
@@ -18,7 +20,17 @@ This is the code dictionary — the companion to the [codebook](codebook.md), wh
 
 **`scripts/nigeria/04_cluster.R`** — assigns each Nigeria contact to one of two engagement clusters (Power / Occasional users) via k-means. Before clustering, it caps every contact's cumulative features at the maximum number of weeks any Scale-up contact has had in the programme (`cap_contacts_to_weeks()`), so a longer-standing Pilot contact isn't favoured purely for having had more time to accumulate activity. Clusters the full population, then Pilot and Scale-up separately. If any of the three resolves to more than two clusters, the script stops and asks for the cluster labels in `config/nigeria_config.R` to be reviewed by hand before continuing — it does not guess a label for an unexpected cluster shape. Writes the cluster columns back onto all four Nigeria data files.
 
-**`scripts/nigeria/05_dashboard.R`** — pre-computes everything the Shiny dashboard needs, as seven separate blocks: weekly active users, a survival/persistence model (how long contacts keep coming back), average sessions per active user per week, individual engagement trajectories, activation/churn/reactivation flow counts, a handful of headline scalars (total users, four-week averages), and course-engagement counts (module-1 starts and module-progression sessions by topic). Writes one `.rds` file per block into `data/nigeria/`, so the dashboard itself never has to compute anything at runtime.
+**`scripts/nigeria/05_dashboard.R`** — pre-computes everything the Shiny dashboard needs, as seven separate blocks: weekly active users, a survival/persistence model (how long contacts keep coming back), average sessions per active user per week, individual engagement trajectories, activation/churn/reactivation flow counts, a handful of headline scalars (total users, four-week averages), and course-engagement counts (module-1 starts and module-progression sessions by topic). Writes one `.rds` file per block into `data/nigeria/`, so the dashboard itself never has to compute anything at runtime. An eighth section builds the data model for dashboard v2 (`data/nigeria/dashboard_v2_data.rds`): weekly new and active teachers, retention cohorts, and the onboarding breakdown read from the onboarding schema's tables.
+
+### Outside the numbered chain
+
+**`scripts/nigeria/cluster_assignment_baseline.R`** — a one-off script that wrote the first rows of the dated cluster-assignment log (`data/nigeria/cluster_assignments.csv`): the cluster labels as they stood before the Phase 1 re-fit, for both the global and the within-cohort schemes. It refuses to run twice.
+
+**`scripts/nigeria/cluster_assignment_append.R`** — appends a new model version's cluster labels to that log without touching earlier rows. It refuses to append a version that is already logged.
+
+**`scripts/deploy_shiny_code.R`** — deploys the two dashboards to shinyapps.io: the archived first dashboard under a separate app name, and `dashboard_v2/` at the live address. Each folder is deployed as it stands, so the copied files inside must be refreshed first.
+
+**`scripts/update_codebook_counts.R`** — recounts the rows in the processed data files and rewrites the table between the auto-count markers in `codebook.md`.
 
 ### Ecuador and Niger
 
@@ -120,7 +132,11 @@ One `plot_dash_*()` function per dashboard panel, each taking pre-computed aggre
 - **`dashboard_ui()`** — builds one country's tab: the sidebar controls (cohort/cluster filters, date range) and the layout of chart cards.
 - **`dashboard_server()`** — the reactive logic behind that tab: responds to filter changes and calls the appropriate `plot_dash_*()` function to render each chart.
 
-`app.R` calls both once per country, so the same module code drives all three tabs from each country's own pre-computed data.
+The archived first dashboard, `app.R`, calls both once per country, so the same module code drives all three tabs from each country's own pre-computed data.
+
+### `dashboard_v2/` — the current dashboard
+
+A self-contained folder, so that it can deploy to shinyapps.io on its own. It holds `app.R` and a copy of `functions/dash_visualisations.R`. The pre-computed data model it reads (`dashboard_v2_data.rds`) is built in section 8 of `scripts/nigeria/05_dashboard.R` and is not in this repository. The dashboard is Nigeria only and has three rows. Row 1 shows how many teachers are arriving and how many are active each week. Row 2 shows retention cohorts. Row 3 shows onboarding: how many teachers never started, started without completing, or completed, and why those who never onboarded did not. Row 3 draws on the onboarding schema's tables. The copied files go stale and must be refreshed before each redeploy.
 
 ## Configuration
 
